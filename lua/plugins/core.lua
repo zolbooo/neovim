@@ -100,7 +100,7 @@ return {
         javascriptreact = { "prettier" },
         typescript = { "prettier" },
         typescriptreact = { "prettier" },
-        json = { "prettier" },
+        json = { "prettier", "jq", stop_after_first = true },
         yaml = { "prettier" },
         markdown = { "prettier" },
         python = { "black" },
