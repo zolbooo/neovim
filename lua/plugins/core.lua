@@ -33,7 +33,50 @@ return {
       indent = { enable = true },
     },
     config = function(_, opts)
-      require("nvim-treesitter.configs").setup(opts)
+      local ok_configs, configs = pcall(require, "nvim-treesitter.configs")
+      if ok_configs then
+        configs.setup(opts)
+        return
+      end
+
+      local ok_ts, ts = pcall(require, "nvim-treesitter")
+      if not ok_ts then
+        return
+      end
+
+      ts.setup({
+        install_dir = opts.install_dir,
+      })
+
+      local highlight_enabled = opts.highlight and opts.highlight.enable
+      local indent_enabled = opts.indent and opts.indent.enable
+      if not highlight_enabled and not indent_enabled then
+        return
+      end
+
+      local function apply_treesitter(bufnr)
+        if highlight_enabled then
+          pcall(vim.treesitter.start, bufnr)
+        end
+
+        if indent_enabled then
+          vim.bo[bufnr].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+        end
+      end
+
+      local group = vim.api.nvim_create_augroup("NvimTreesitterCompat", { clear = true })
+      vim.api.nvim_create_autocmd("FileType", {
+        group = group,
+        callback = function(args)
+          apply_treesitter(args.buf)
+        end,
+      })
+
+      for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
+        if vim.api.nvim_buf_is_loaded(bufnr) and vim.bo[bufnr].filetype ~= "" then
+          apply_treesitter(bufnr)
+        end
+      end
     end,
   },
 
