@@ -94,6 +94,13 @@ return {
       },
     },
     opts = {
+      formatters = {
+        terraform_fmt = {
+          command = "tofu",
+          args = { "fmt", "-" },
+          stdin = true,
+        },
+      },
       formatters_by_ft = {
         lua = { "stylua" },
         javascript = { "prettier" },
@@ -104,6 +111,7 @@ return {
         yaml = { "prettier" },
         markdown = { "prettier" },
         python = { "black" },
+        terraform = { "terraform_fmt" },
         sh = { "shfmt" },
       },
     },
