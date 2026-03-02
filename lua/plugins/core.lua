@@ -30,15 +30,14 @@ return {
     event = { "BufReadPost", "BufNewFile" },
     opts = {
       highlight = { enable = true },
-      indent = { enable = true },
+      indent = {
+        enable = true,
+        -- Tree-sitter Python indent can aggressively dedent while typing.
+        -- Keep Tree-sitter highlighting, but use Neovim's Python indent script.
+        disable = { "python" },
+      },
     },
     config = function(_, opts)
-      local ok_configs, configs = pcall(require, "nvim-treesitter.configs")
-      if ok_configs then
-        configs.setup(opts)
-        return
-      end
-
       local ok_ts, ts = pcall(require, "nvim-treesitter")
       if not ok_ts then
         return
@@ -50,8 +49,23 @@ return {
 
       local highlight_enabled = opts.highlight and opts.highlight.enable
       local indent_enabled = opts.indent and opts.indent.enable
+      local indent_disable = opts.indent and opts.indent.disable
       if not highlight_enabled and not indent_enabled then
         return
+      end
+
+      local function indent_is_disabled(bufnr)
+        local filetype = vim.bo[bufnr].filetype
+        if type(indent_disable) == "function" then
+          local ok, disabled = pcall(indent_disable, filetype, bufnr)
+          return ok and disabled or false
+        end
+
+        if type(indent_disable) == "table" then
+          return vim.list_contains(indent_disable, filetype)
+        end
+
+        return false
       end
 
       local function apply_treesitter(bufnr)
@@ -59,7 +73,7 @@ return {
           pcall(vim.treesitter.start, bufnr)
         end
 
-        if indent_enabled then
+        if indent_enabled and not indent_is_disabled(bufnr) then
           vim.bo[bufnr].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
         end
       end
