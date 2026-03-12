@@ -127,6 +127,7 @@ return {
         python = { "black" },
         terraform = { "terraform_fmt" },
         sh = { "shfmt" },
+        c = { "clang-format" },
       },
     },
   },
